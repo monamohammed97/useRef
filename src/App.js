@@ -1,25 +1,133 @@
-import React, { useEffect, useRef, useState } from "react";
-import "./styles.css";
+import React, { useEffect, useState, useRef } from "react";
+import axios from "axios";
 
 export default function App() {
-  const [data, setData] = useState("");
-  const prevData = useRef();
+  const [term, setTerm] = useState("javascript");
+  const [result, setResult] = useState([]);
+
+  //define use ref
+  //prevTerm = undefined;
+  //render
+  //use effect => use ref -> javascript
+  //update state (term) javascript 2
+  //render ->print state (javascript2) / print use ref (javascript)
+  //use effect -> use ref -> javascript2
+
+  const prevStateTerm = useRef("");
+
   useEffect(() => {
-    prevData.current = data;
+    prevStateTerm.current = term;
+  }, [term]);
+
+  const prevTerm = prevStateTerm.current;
+
+  useEffect(() => {
+    const search = async () => {
+      const respond = await axios.get("https://en.wikipedia.org/w/api.php", {
+        params: {
+          action: "query",
+          list: "search",
+          origin: "*",
+          format: "json",
+          srsearch: term,
+        },
+      });
+      setResult(respond.data.query.search);
+    };
+
+    if (!result.length) {
+      search();
+    } else if (term !== prevTerm) {
+      const debounceSearch = setTimeout(() => {
+        if (term) {
+          search();
+        }
+      }, 2000);
+
+      return () => {
+        clearTimeout(debounceSearch);
+      };
+    }
+  }, [term, result.length, prevTerm]);
+
+  //init render
+  //useEffect -> check length -> search() -> update resualt
+  //re-render
+  //useEffect ->check length -> search() -> update resualt
+  //re-render
+
+  const fetchResult = result.map((el) => {
+    return (
+      <tr key={el.pageid}>
+        <td>1</td>
+        <td>{el.title}</td>
+        <td>
+          <span dangerouslySetInnerHTML={{ __html: el.snippet }} />
+        </td>
+      </tr>
+    );
   });
-  const prevState = prevData.current;
+
   return (
-    <div className="App">
-      <input
-        value={data}
-        onChange={(e) => {
-          setData(e.target.value);
-        }}
-      />
-      <h1>
-        Hello CodeSandbox {data}, prev: {prevState}
-      </h1>
-      <h2>Start editing to see some magic happen!</h2>
+    <div className="container">
+      <div className="row">
+        <div className="col">
+          <div className="my-3">
+            <label htmlFor="exampleFormControlInput1" className="form-label">
+              Search Input
+            </label>
+            <input
+              type="text"
+              className="form-control"
+              id="exampleFormControlInput1"
+              onChange={(e) => setTerm(e.target.value)}
+              value={term}
+            />
+          </div>
+          <p>Current term: {term}</p>
+          <p>Prev Term: {prevTerm}</p>
+        </div>
+      </div>
+
+      <div className="row">
+        <div className="col">
+          <table className="table">
+            <thead>
+              <tr>
+                <th scope="col">#</th>
+                <th scope="col">Title</th>
+                <th scope="col">Desc</th>
+              </tr>
+            </thead>
+            <tbody>{fetchResult}</tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
+// import React, { useEffect, useRef, useState } from "react";
+// import "./styles.css";
+
+// export default function App() {
+//   const [data, setData] = useState("");
+//   const prevData = useRef();
+//   useEffect(() => {
+//     prevData.current = data;
+//   });
+//   const prevState = prevData.current;
+//   return (
+//     <div className="App">
+//       <input
+//         value={data}
+//         onChange={(e) => {
+//           setData(e.target.value);
+//         }}
+//       />
+//       <h1>
+//         Hello CodeSandbox {data}, prev: {prevState}
+//       </h1>
+//       <h2>Start editing to see some magic happen!</h2>
+//     </div>
+//   );
+// }
